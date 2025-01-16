@@ -1,0 +1,6 @@
+{
+  "ignoreFiles": ["**/*.ts", "**/*.tsx"],
+  "rules": {
+    "no-empty-source": null
+  }
+}
