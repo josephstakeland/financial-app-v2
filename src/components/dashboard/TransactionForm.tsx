@@ -22,8 +22,9 @@ interface TransactionFormProps {
     type: "income" | "expense";
     amount: number;
     description: string;
+    label: "viajes" | "transporte" | "hogar" | "personal" | "servicios";
     date: string;
-  }) => void;
+  }) => Promise<boolean>;
 }
 
 export function TransactionForm({ onSubmit }: TransactionFormProps) {
@@ -31,11 +32,12 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [label, setLabel] = useState<"viajes" | "transporte" | "hogar" | "personal" | "servicios">("hogar");
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !description) {
+    if (!amount || !description || !label) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos",
@@ -44,21 +46,24 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
       return;
     }
 
-    onSubmit({
+    const success = await onSubmit({
       type,
       amount: Number(amount),
       description,
+      label,
       date: new Date().toISOString(),
     });
 
-    setAmount("");
-    setDescription("");
-    setOpen(false);
-    
-    toast({
-      title: "Éxito",
-      description: "Transacción registrada correctamente",
-    });
+    if (success) {
+      setAmount("");
+      setDescription("");
+      setOpen(false);
+      
+      toast({
+        title: "Éxito",
+        description: "Transacción registrada correctamente",
+      });
+    }
   };
 
   return (
@@ -91,6 +96,18 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+          <Select value={label} onValueChange={(v: "viajes" | "transporte" | "hogar" | "personal" | "servicios") => setLabel(v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Etiqueta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="viajes">Viajes</SelectItem>
+              <SelectItem value="transporte">Transporte</SelectItem>
+              <SelectItem value="hogar">Hogar</SelectItem>
+              <SelectItem value="personal">Personal</SelectItem>
+              <SelectItem value="servicios">Servicios</SelectItem>
+            </SelectContent>
+          </Select>
           <Button type="submit" className="w-full">
             Guardar
           </Button>

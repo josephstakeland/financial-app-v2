@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Camera, Mail, User } from "lucide-react";
+import { Camera, Mail, User, ArrowUp, ArrowDown } from "lucide-react";
 import { useUser } from "@/context/UserContext";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -110,6 +112,46 @@ const Profile = () => {
             </CardContent>
           </Card>
         </form>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Últimas Transacciones</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {user.transactions.length > 0 ? (
+              <div className="space-y-2">
+                {user.transactions.map((transaction) => (
+                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
+                        {transaction.type === 'income' ? (
+                          <ArrowUp className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <ArrowDown className="h-5 w-5 text-red-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{transaction.description}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(transaction.date), "d 'de' MMMM yyyy", { locale: es })}
+                        </p>
+                      </div>
+                    </div>
+                    <p className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {transaction.type === 'income' ? '+' : '-'}
+                      {new Intl.NumberFormat('es-AR', {
+                        style: 'currency',
+                        currency: 'ARS'
+                      }).format(transaction.amount)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">No hay transacciones recientes</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

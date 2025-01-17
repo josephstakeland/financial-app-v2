@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
@@ -6,6 +6,7 @@ import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
 import { TransactionForm } from "@/components/dashboard/TransactionForm";
 import { TransactionList } from "@/components/dashboard/TransactionList";
 import { generateId } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { 
   Plane, 
@@ -31,6 +32,7 @@ interface Transaction {
   type: "income" | "expense";
   amount: number;
   description: string;
+  label: "viajes" | "transporte" | "hogar" | "personal" | "servicios";
   date: string;
 }
 
@@ -38,15 +40,80 @@ const Index = () => {
   const { user, isLoading } = useUser();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+
+  // Load transactions only once when component mounts or user changes
+  useEffect(() => {
+    const loadTransactions = async () => {
+      try {
+        if (!user?.id) return;
+
+        setLoadingTransactions(true);
+        
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false })
+          .limit(10);  // Get only last 10 transactions
+
+        if (error) throw error;
+
+        if (data) {
+          const formattedTransactions = data.map(t => ({
+            ...t,
+            date: new Date(t.date).toISOString()
+          }));
+          setTransactions(formattedTransactions);
+        }
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+      } finally {
+        setLoadingTransactions(false);
+      }
+    };
+
+    loadTransactions();
+  }, [user?.id]);
+
   if (!user) {
     return <Navigate to="/" />;
   }
 
-  const handleNewTransaction = (transaction: Omit<Transaction, "id">) => {
-    setTransactions((prev) => [
-      { ...transaction, id: generateId() },
-      ...prev,
-    ]);
+  const handleNewTransaction = async (transaction: Omit<Transaction, "id">) => {
+    try {
+      if (!user?.id) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([{
+          type: transaction.type,
+          amount: transaction.amount,
+          description: transaction.description,
+          label: transaction.label,
+          date: transaction.date,
+          user_id: user.id
+        }])
+        .select();
+      
+      if (error) throw error;
+
+      if (data) {
+        const newTransaction = { 
+          ...transaction, 
+          id: data[0].id,
+          date: new Date(transaction.date).toISOString()
+        };
+        setTransactions((prev) => [newTransaction, ...prev]);
+        return true;
+      }
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      alert(`Error al guardar la transacción: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      return false;
+    }
   };
 
   const totalIncome = transactions
