@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -8,17 +9,75 @@ import { Button } from "@/components/ui/button";
 import { Bell, Moon, Sun, DollarSign } from "lucide-react";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useTheme } from "next-themes";
+import { useUser } from "@/context/UserContext";
+import { supabase } from "@/lib/supabase";
 
 const Settings = () => {
   const navigate = useNavigate();
-  const [notificationEnabled, setNotificationEnabled] = useState(false);
   const { theme, setTheme } = useTheme();
   const [hasChanges, setHasChanges] = useState(false);
+  const { currency, setCurrency } = useCurrency();
+  const { user } = useUser();
+  const { toast } = useToast();
 
-  const handleSave = () => {
-    // Aquí iría la lógica para guardar los cambios
-    setHasChanges(false);
-    // Mostrar notificación de éxito
+  const [tempSettings, setTempSettings] = useState({
+    theme: theme,
+    currency: currency,
+    notificationEnabled: false
+  });
+
+  const [notificationEnabled, setNotificationEnabled] = useState(tempSettings.notificationEnabled);
+
+  const handleSettingChange = (setting: string, value: string | boolean) => {
+    setTempSettings(prev => ({...prev, [setting]: value}));
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!user) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          theme_preference: tempSettings.theme,
+          currency: tempSettings.currency,
+          notifications_enabled: tempSettings.notificationEnabled
+        })
+        .eq('id', user.id)
+        .select();
+
+      if (error) throw error;
+      
+      if (!data) {
+        throw new Error('No se recibieron datos de actualización');
+      }
+
+      // Actualizar los estados principales con los valores guardados
+      setTheme(tempSettings.theme);
+      setCurrency(tempSettings.currency);
+      setNotificationEnabled(tempSettings.notificationEnabled);
+      
+      // Actualizar tempSettings con los valores confirmados
+      setTempSettings({
+        theme: tempSettings.theme,
+        currency: tempSettings.currency,
+        notificationEnabled: tempSettings.notificationEnabled
+      });
+      
+      setHasChanges(false);
+      
+      // Mostrar notificación de éxito
+      toast({
+        title: "Configuración guardada",
+        description: "Tus preferencias se han actualizado correctamente",
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      // Mostrar notificación de error
+    }
   };
 
   const handleCancel = () => {
@@ -60,13 +119,10 @@ const Settings = () => {
                   </p>
                 </div>
               </div>
-              <Switch 
-                checked={notificationEnabled}
-                onCheckedChange={(checked) => {
-                  setNotificationEnabled(checked);
-                  setHasChanges(true);
-                }}
-              />
+                <Switch 
+                  checked={tempSettings.notificationEnabled}
+                  onCheckedChange={(checked) => handleSettingChange('notificationEnabled', checked)}
+                />
             </div>
           </CardContent>
         </Card>
@@ -84,7 +140,10 @@ const Settings = () => {
                   Selecciona la moneda para mostrar los valores
                 </p>
               </div>
-              <SelectCurrency onChange={() => setHasChanges(true)} />
+              <SelectCurrency 
+                onChange={() => setHasChanges(true)}
+                handleSettingChange={handleSettingChange}
+              />
             </div>
           </CardContent>
         </Card>
@@ -105,11 +164,8 @@ const Settings = () => {
                 </div>
               </div>
                 <Switch 
-                  checked={theme === "dark"}
-                  onCheckedChange={(checked) => {
-                    setTheme(checked ? "dark" : "light");
-                    setHasChanges(true);
-                  }}
+                  checked={tempSettings.theme === "dark"}
+                  onCheckedChange={(checked) => handleSettingChange('theme', checked ? "dark" : "light")}
                 />
             </div>
           </CardContent>
@@ -133,11 +189,14 @@ const Settings = () => {
   );
 };
 
-const SelectCurrency = ({ onChange }: { onChange: () => void }) => {
-  const { currency, setCurrency } = useCurrency();
+const SelectCurrency = ({ onChange, handleSettingChange }: { 
+  onChange: () => void;
+  handleSettingChange: (setting: string, value: string | boolean) => void;
+}) => {
+  const { currency } = useCurrency();
 
   const handleChange = (value: string) => {
-    setCurrency(value);
+    handleSettingChange('currency', value);
     onChange();
   };
 
