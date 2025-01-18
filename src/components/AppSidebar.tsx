@@ -12,8 +12,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Home, History, Plane, Building2, User2, Wrench, Plus } from "lucide-react";
+import { Home, History, Plane, Building2, User2, Wrench, Plus, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { AccountMenu } from "@/components/ui/account-menu";
+import { useUser } from "@/context/UserContext";
 
 const labels = [
   { title: "Viajes", icon: Plane },
@@ -29,12 +31,15 @@ const mainMenuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { signOut } = useUser();
 
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-border/5 p-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Mi Finanzas</h2>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -84,6 +89,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
       </SidebarContent>
     </Sidebar>
   );

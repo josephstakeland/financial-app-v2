@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
@@ -37,6 +37,7 @@ interface Transaction {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const { user, isLoading } = useUser();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
@@ -157,15 +158,16 @@ const Index = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
                   Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.location.href = '/settings'}>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
                   Configuración
                 </DropdownMenuItem>
-                <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
+                  Cerrar Sesión
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -210,19 +212,16 @@ const Index = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           {[
             { icon: Plane, label: "Viajes" },
             { icon: Home, label: "Hogar" },
-            { icon: User2, label: "Personal" },
             { icon: Cloud, label: "Servicios" },
-            { icon: Plus, label: "Agregar" },
           ].map((action, index) => (
             <Button
               key={index}
               variant="outline"
               className="flex flex-col items-center p-4 h-auto gap-2"
-              onClick={() => action.label === "Agregar" && document.querySelector<HTMLButtonElement>('[data-new-transaction]')?.click()}
             >
               <action.icon className="h-6 w-6" />
               <span className="text-sm">{action.label}</span>
