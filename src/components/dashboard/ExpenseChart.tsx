@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine, CartesianGrid } from "recharts";
 import type { TooltipProps } from "recharts";
 import { defs, linearGradient, stop } from "recharts/es6";
+import { useCurrency } from "@/context/CurrencyContext";
+import { useTheme } from "@/context/ThemeContext";
 
 interface ChartData {
   date: string;
@@ -23,12 +25,16 @@ type CustomTooltipProps = TooltipProps<number, string> & {
   label?: string;
 };
 
-const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload, label, color }: CustomTooltipProps & { color: string }) => {
+  const { currency } = useCurrency();
+  
   if (active && payload && payload.length) {
     return (
       <div className="bg-background border rounded-lg p-3 shadow-sm">
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-sm">${payload[0].value.toFixed(2)}</p>
+        <p className="text-sm" style={{ textShadow: `0 0 5px ${color}, 0 0 10px ${color}` }}>
+          {payload[0].value.toFixed(2)} {currency}
+        </p>
       </div>
     );
   }
@@ -36,6 +42,9 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 export function ExpenseChart({ data, title, color }: ExpenseChartProps) {
+  const { currency } = useCurrency();
+  const { isDarkMode } = useTheme();
+  
   return (
     <Card className="animate-fade-in">
       <CardHeader>
@@ -46,7 +55,7 @@ export function ExpenseChart({ data, title, color }: ExpenseChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
               <CartesianGrid 
-                stroke="#eee" 
+                stroke={isDarkMode ? "#444" : "#ddd"}
                 strokeOpacity={0.2}
               />
               <defs>
@@ -65,17 +74,23 @@ export function ExpenseChart({ data, title, color }: ExpenseChartProps) {
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#888' }}
+                tick={{ 
+                  fill: color,
+                  filter: isDarkMode ? `drop-shadow(0 0 2px ${color}) drop-shadow(0 0 5px ${color})` : undefined
+                }}
               />
               <YAxis
                 stroke="#666"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `$${value}`}
-                tick={{ fill: '#888' }}
+                tickFormatter={(value) => `${value} ${currency}`}
+                tick={{ 
+                  fill: color,
+                  filter: isDarkMode ? `drop-shadow(0 0 2px ${color}) drop-shadow(0 0 5px ${color})` : undefined
+                }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip color={color} />} />
               {data.map((entry, index) => (
                 <ReferenceLine
                   key={`refLine-${index}`}
@@ -97,6 +112,7 @@ export function ExpenseChart({ data, title, color }: ExpenseChartProps) {
                 fill="url(#areaGradient)"
                 style={{
                   filter: `drop-shadow(0 0 8px ${color})`,
+                  animation: 'neon-pulse 2s infinite alternate'
                 }}
               />
             </LineChart>
