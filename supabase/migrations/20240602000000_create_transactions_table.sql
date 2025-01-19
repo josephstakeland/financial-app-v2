@@ -8,7 +8,7 @@ CREATE TABLE transactions (
   amount NUMERIC NOT NULL,
   description TEXT NOT NULL,
   label TEXT NOT NULL CHECK (label IN ('viajes', 'transporte', 'hogar', 'personal', 'servicios')),
-  date TIMESTAMP WITH TIME ZONE NOT NULL,
+  date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc'::text, now()),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );

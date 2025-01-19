@@ -50,7 +50,16 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">{transaction.description}</TableCell>
-                <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {new Date(transaction.date).toLocaleString('es-PE', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'America/Lima'
+                  })}
+                </TableCell>
                 <TableCell
                   className={`text-right font-medium ${
                     transaction.type === "income" ? "text-success" : "text-danger"
