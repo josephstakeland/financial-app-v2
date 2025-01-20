@@ -12,6 +12,7 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import { AccountsPage } from "./pages/Accounts";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const AppContent = () => {
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/accounts" element={<AccountsPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

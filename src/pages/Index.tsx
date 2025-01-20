@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { ExpenseChart } from "@/components/dashboard/ExpenseChart";
+import { IncomeExpenseChart } from "@/components/dashboard/IncomeExpenseChart";
 import { TransactionForm } from "@/components/dashboard/TransactionForm";
 import { TransactionList } from "@/components/dashboard/TransactionList";
 import { generateId } from "@/lib/utils";
@@ -230,16 +231,13 @@ const Index = () => {
         </div>
 
         {/* Charts */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <ExpenseChart
-            data={getChartData("income")}
-            title="Tendencia de Ingresos"
-            color="#10B981"
-          />
-          <ExpenseChart
-            data={getChartData("expense")}
-            title="Tendencia de Gastos"
-            color="#F43F5E"
+        <div className="grid gap-4">
+          <IncomeExpenseChart 
+            data={transactions.map(t => ({
+              date: new Date(t.date).toLocaleDateString(),
+              income: t.type === 'income' ? t.amount : 0,
+              expenses: t.type === 'expense' ? t.amount : 0
+            }))}
           />
         </div>
 
